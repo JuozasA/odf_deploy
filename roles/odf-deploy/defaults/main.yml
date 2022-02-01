@@ -17,8 +17,3 @@ odf_catalog_channel: stable-4.8
 storage_version: 4.8.0
 storage_set_count: 1
 storage_set_replica_count: 3
-
-node_list:
-  - ip-10-0-137-220.eu-west-2.compute.internal
-  - ip-10-0-183-228.eu-west-2.compute.internal
-  - ip-10-0-223-218.eu-west-2.compute.internal

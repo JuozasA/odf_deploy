@@ -4,23 +4,6 @@
     state: present
     template: '0_catalog_source.yml.j2'
 
-- name: label and taint OCS nodes
-  kubernetes.core.k8s:
-    state: patched
-    kind: Node
-    name: "{{ item }}"
-    definition:
-      metadata:
-        labels:
-          cluster.ocs.openshift.io/openshift-storage: ''
-      spec: 
-        taints:
-          - key: node.ocs.openshift.io/storage
-            value: 'true'
-            effect: NoSchedule
-  with_items: "{{ node_list }}"
-
-
 - name: Create a Local Storage Operator namespace
   kubernetes.core.k8s:
     name: openshift-local-storage
@@ -157,7 +140,7 @@
   register: __volset_info
   delay: 10
   retries: 30
-  until: __volset_info.resources[0].status.totalProvisionedDeviceCount == 3
+  until: "__volset_info.resources[0].status.totalProvisionedDeviceCount == {{ storage_set_replica_count }}"
 
 
 - name: Create ODF cluster
@@ -189,3 +172,14 @@
   delay: 10
   retries: 30
   until: __odf_info.resources[0].status.phase == "Ready"
+
+- name: Enable Ceph tools
+  kubernetes.core.k8s:
+    state: present
+    api_version: ocs.openshift.io/v1
+    kind: OCSInitialization
+    name: ocsinit
+    namespace: openshift-storage
+    definition:
+      spec:
+        enableCephTools: true
