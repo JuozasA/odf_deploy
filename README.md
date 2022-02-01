@@ -26,14 +26,6 @@ The OpenShift Data Foundation deployment is based on version 4.8
   
 Please make sure you have 3 worker nodes delegated to ODF.
 
-Add them to the list on roles/odf-deploy/defaults/main.yml:
-```yaml
-node_list:
-  - ip-10-0-137-220.eu-west-2.compute.internal
-  - ip-10-0-183-228.eu-west-2.compute.internal
-  - ip-10-0-223-218.eu-west-2.compute.internal
-```
-
 Run the ansible role:
 ```
 ansible-playbook use_playbook.yml
