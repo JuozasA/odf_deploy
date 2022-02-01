@@ -1,0 +1,19 @@
+---
+# kubeconfig path
+kubeconfig: '$HOME/.kube/config'
+
+# Catalog Source
+catalog_name: redhat-operators
+catalog_publisher: Red Hat
+catalog_displayName: Red Hat Operators
+catalog_image: 'registry.redhat.io/redhat/redhat-operator-index:v4.8'
+
+
+#LSO
+lso_catalog_channel: 4.8
+
+# ODF
+odf_catalog_channel: stable-4.8
+storage_version: 4.8.0
+storage_set_count: 1
+storage_set_replica_count: 3

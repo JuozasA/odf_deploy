@@ -1,0 +1,174 @@
+---
+- name: Add Catalog Source for ODF images
+  kubernetes.core.k8s:
+    state: present
+    template: '0_catalog_source.yml.j2'
+
+- name: Create a Local Storage Operator namespace
+  kubernetes.core.k8s:
+    name: openshift-local-storage
+    api_version: v1
+    kind: Namespace
+    state: present
+
+- name: Create a OpenShift Storage namespace
+  kubernetes.core.k8s:
+    name: openshift-storage
+    api_version: v1
+    kind: Namespace
+    state: present
+    definition:
+      metadata:
+        labels:
+          openshift.io/cluster-monitoring: "true"
+
+- name: Install LSO operator
+  kubernetes.core.k8s:
+    state: present
+    template: '1_lso_operator_install.yml.j2'
+
+- pause:
+    seconds: 5
+
+- name: Get installationCSV name
+  kubernetes.core.k8s_info:
+    api_version: operators.coreos.com/v1alpha1
+    kind: Subscription
+    name: local-storage-operator
+    namespace: openshift-local-storage
+  register: __lso_csv_name
+  delay: 10
+  retries: 30
+  until: __lso_csv_name.resources[0].status | regex_search('installedCSV')
+
+- name: Get installation status
+  kubernetes.core.k8s_info:
+    api_version: operators.coreos.com/v1alpha1
+    kind: ClusterServiceVersion
+    name: "{{ __lso_csv_name.resources[0].status.installedCSV }}"
+    namespace: openshift-local-storage
+  register: __lso_resp
+  delay: 10
+  retries: 30
+  until: __lso_resp.resources[0].status.reason == "InstallSucceeded"
+
+- name: Install OCS operator
+  kubernetes.core.k8s:
+    state: present
+    template: '1_odf_operator_install.yml.j2'
+
+- pause:
+    seconds: 5
+
+- name: Get installationCSV name
+  kubernetes.core.k8s_info:
+    api_version: operators.coreos.com/v1alpha1
+    kind: Subscription
+    name: ocs-operator
+    namespace: openshift-storage
+  register: __ocs_csv_name
+  delay: 10
+  retries: 30
+  until: __ocs_csv_name.resources[0].status | regex_search('installedCSV')
+
+- name: Get installation status
+  kubernetes.core.k8s_info:
+    api_version: operators.coreos.com/v1alpha1
+    kind: ClusterServiceVersion
+    name: "{{ __ocs_csv_name.resources[0].status.installedCSV }}"
+    namespace: openshift-storage
+  register: __ocs_resp
+  delay: 10
+  retries: 30
+  until: __ocs_resp.resources[0].status.reason == "InstallSucceeded"
+
+- name: Create auto-discovery
+  kubernetes.core.k8s:
+    state: present
+    template: '2_odf_volumediscovery.yml.j2'
+
+- pause:
+    seconds: 5
+
+- name: Get discovered volumes status
+  kubernetes.core.k8s_info:
+    api_version: local.storage.openshift.io/v1alpha1
+    kind: LocalVolumeDiscovery
+    name: auto-discover-devices
+    namespace: openshift-local-storage
+  register: __volume_info
+  delay: 10
+  retries: 30
+  until: __volume_info.resources[0].status | regex_search('phase')
+
+- name: Get discovery status
+  kubernetes.core.k8s_info:
+    api_version: local.storage.openshift.io/v1alpha1
+    kind: LocalVolumeDiscovery
+    name: auto-discover-devices
+    namespace: openshift-local-storage
+  register: __volume_info
+  delay: 10
+  retries: 30
+  until: __volume_info.resources[0].status.phase == "Discovering"
+
+- name: Create LocalVolumeSet
+  kubernetes.core.k8s:
+    state: present
+    template: '2_odf_localvolumeset.yml.j2'
+
+- pause:
+    seconds: 5
+
+- name: Get local volume set status
+  kubernetes.core.k8s_info:
+    api_version: local.storage.openshift.io/v1alpha1
+    kind: LocalVolumeSet
+    name: odf-volumes
+    namespace: openshift-local-storage
+  register: __volset_info
+  delay: 10
+  retries: 30
+  until: __volset_info.resources[0].status | regex_search('totalProvisionedDeviceCount')
+
+- name: Get local volume set count
+  kubernetes.core.k8s_info:
+    api_version: local.storage.openshift.io/v1alpha1
+    kind: LocalVolumeSet
+    name: odf-volumes
+    namespace: openshift-local-storage
+  register: __volset_info
+  delay: 10
+  retries: 30
+  until: __volset_info.resources[0].status.totalProvisionedDeviceCount == 3
+
+
+- name: Create ODF cluster
+  kubernetes.core.k8s:
+    state: present
+    template: '3_odf_cluster.yml.j2'
+
+- pause:
+    seconds: 5
+
+- name: Get ODF cluster status
+  kubernetes.core.k8s_info:
+    api_version: ocs.openshift.io/v1
+    kind: StorageCluster
+    name: ocs-storagecluster
+    namespace: openshift-storage
+  register: __odf_info
+  delay: 10
+  retries: 30
+  until: __odf_info.resources[0].status | regex_search('phase')
+
+- name: Wait for ODF cluster installation to finish
+  kubernetes.core.k8s_info:
+    api_version: ocs.openshift.io/v1
+    kind: StorageCluster
+    name: ocs-storagecluster
+    namespace: openshift-storage
+  register: __odf_info
+  delay: 10
+  retries: 30
+  until: __odf_info.resources[0].status.phase == "Ready"

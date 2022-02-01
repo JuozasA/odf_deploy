@@ -1,0 +1,39 @@
+---
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: odf-volumes
+  labels:
+    local.storage.openshift.io/owner-name: odf-volumes
+    local.storage.openshift.io/owner-namespace: openshift-local-storage
+provisioner: kubernetes.io/no-provisioner
+reclaimPolicy: Retain
+volumeBindingMode: WaitForFirstConsumer
+---
+apiVersion: local.storage.openshift.io/v1alpha1
+kind: LocalVolumeSet
+metadata:
+  name: odf-volumes
+  namespace: openshift-local-storage
+spec:
+  tolerations:
+  - key: "node.ocs.openshift.io/storage"
+    value: "true"
+    effect: NoSchedule
+  nodeSelector:
+    nodeSelectorTerms:
+      - matchExpressions:
+          - key: cluster.ocs.openshift.io/openshift-storage
+            operator: In
+            values:
+              - ""
+  storageClassName: odf-volumes
+  volumeMode: Block
+  fstype: ext4
+  maxDeviceCount: 10
+  deviceInclusionSpec:
+    deviceTypes:
+    - disk
+    - part
+    deviceMechanicalProperties:
+    - NonRotational

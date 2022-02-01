@@ -1,0 +1,7 @@
+---
+- name: Deploy ODF
+  hosts: localhost
+  connection: local
+  become: false
+  roles:
+    - odf-deploy
