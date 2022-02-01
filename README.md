@@ -1,6 +1,6 @@
 # Summary
 - [Introduction](#Introduction)
--  [Deploy 4 OSD nodes in  2 AZs with 3rd AZ and an arbiter node](#Deploy ODF v4.7 Stretched Cluster)
+- [Deploy ODF v4.8 Cluster](#Deploy_ODF_v4.8_Cluster)
 
 ## Introduction 
 Ansible role to deploy ODF cluster with attached devices
@@ -23,7 +23,7 @@ kubeconfig: '$HOME/.kube/config'
 ## OpenShift Data Foundation v4.7
 The OpenShift Data Foundation deployment is based on version 4.8
 
-### Deploy ODF v4.7 Stretched Cluster  
+### Deploy ODF v4.8 Cluster  
   
 Please make sure you have 3 worker nodes delegated to ODF.
 
