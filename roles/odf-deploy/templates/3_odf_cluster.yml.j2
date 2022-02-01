@@ -20,7 +20,10 @@ spec:
     cephObjectStoreUsers: {}
     cephObjectStores: {}
   monDataDirHostPath: /var/lib/rook
-  nodeTopologies: {}
+  nodeTopologies:
+    labels:
+      cluster.ocs.openshift.io/openshift-storage: 
+        - ''
   storageDeviceSets:
     - config: {}
       count: {{ storage_set_count }}
